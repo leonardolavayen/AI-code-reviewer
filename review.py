@@ -1,7 +1,8 @@
 import os
 import requests
 import json
-import google.genai as genai
+from google import genai
+from google.genai import types
 
 GITHUB_REPOSITORY = os.environ.get("GITHUB_REPOSITORY")  
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
