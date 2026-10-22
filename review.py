@@ -1,7 +1,7 @@
 import os
 import requests
 import json
-import google.generativeai as genai
+import google.genai as genai
 
 GITHUB_REPOSITORY = os.environ.get("GITHUB_REPOSITORY")  
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
@@ -20,7 +20,7 @@ def get_pr_diff():
     return response.text
 
 def review_code_with_AI(diff_text):
-    genai.configure(api_key=os.environ.get("LLM_API_KEY"))
+    client = genai.Client(api_key=os.environ.get("LLM_API_KEY"))
 
     prompt = f"""
     Act as a Senior Software Engineer. Review the following Pull Request code diff. 
@@ -42,13 +42,15 @@ def review_code_with_AI(diff_text):
     {diff_text}
     """
 
-    model = genai.GenerativeModel(
-        'gemini-1.5-flash',
-        generation_config={"response_mime_type": "application/json"}
-    )
     
     try:
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+            )
+        )
         reviews = json.loads(response.text)
         return reviews
     except Exception as e:
