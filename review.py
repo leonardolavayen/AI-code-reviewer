@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+import time
 from google import genai
 from google.genai import types
 
@@ -43,20 +44,24 @@ def review_code_with_AI(diff_text):
     {diff_text}
     """
 
-    
-    try:
-        response = client.models.generate_content(
-            model='gemini-3.8-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model='gemini-3.8-flash', 
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                )
             )
-        )
-        reviews = json.loads(response.text)
-        return reviews
-    except Exception as e:
-        print(f"Error while processing Gemini response: {e}")
-        return []
+            return json.loads(response.text)
+        except Exception as e:
+            if "503" in str(e) and attempt < max_retries - 1:
+                print(f"Servers might be busy. Trying again... (Attempt {attempt + 1})")
+                time.sleep(10)
+            else:
+                print(f"Error while processing Gemini response: {e}")
+                return []
 
 def get_latest_commit_id():
     url = f"{GITHUB_API_URL}/repos/{GITHUB_REPOSITORY}/pulls/{PR_NUMBER}"
